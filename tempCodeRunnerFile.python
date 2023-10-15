@@ -1,0 +1,44 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the image
+image_path = 'C:\\Users\\HP\\Pictures\\slides_congo_ge_1080a.jpg'
+original_image = cv2.imread(image_path)
+
+if original_image is None:
+    print("Error: Couldn't open the image.")
+else:
+    hsv_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+
+    lower_green = np.array([35, 50, 50])
+    upper_green = np.array([90, 255, 255])
+    mask = cv2.inRange(hsv_image, lower_green, upper_green)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    total_forest_area = 0
+    min_contour_area = 1000  
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > min_contour_area:
+            total_forest_area += area
+
+    total_image_area = mask.shape[0] * mask.shape[1]
+    total_non_forest_area = total_image_area - total_forest_area
+    forest_percentage = (total_forest_area / total_image_area) * 100
+
+    print("Total Forest Area: {} square pixels".format(total_forest_area))
+    print("Total Non-Forest Area: {} square pixels".format(total_non_forest_area))
+    print("Forest Area Percentage: {:.2f}%".format(forest_percentage))
+
+    categories = ['Forest', 'Non-Forest']
+    areas = [total_forest_area, total_non_forest_area]
+    plt.bar(categories, areas, color=['green', 'red'])
+    plt.ylabel('Number of Pixels')
+    plt.title('Forest vs Non-Forest Area')
+    plt.show()
+
+    output_image = original_image.copy()
+    cv2.drawContours(output_image, contours, -1, (0, 255, 0), 2)
+    cv2.imshow('Forest Contours', output_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
